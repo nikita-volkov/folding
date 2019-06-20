@@ -3,6 +3,7 @@ module Unfoldl exposing (..)
 import Benchmark exposing (..)
 import Benchmark.Runner
 import Folding.Unfoldl as Unfoldl exposing (Unfoldl)
+import Set
 
 
 main =
@@ -71,4 +72,12 @@ main =
                   "List" (\ _ -> sample ++ sample ++ sample ++ sample)
                   "Unfoldl" (\ _ -> Unfoldl.toList (Unfoldl.prepend (Unfoldl.list sample) (Unfoldl.prepend (Unfoldl.list sample) (Unfoldl.prepend (Unfoldl.list sample) (Unfoldl.list sample)))))
               ]
+        ,
+        let
+          sample = List.range 0 1000
+          op x = x + 1
+          in
+            Benchmark.compare "map and convert to set"
+              "List" (\ _ -> Set.fromList (List.map op sample))
+              "Unfoldl" (\ _ -> Unfoldl.toSet (Unfoldl.map op (Unfoldl.list sample)))
       ]
