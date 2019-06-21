@@ -73,11 +73,30 @@ main =
                   "Unfoldl" (\ _ -> Unfoldl.toList (Unfoldl.prepend (Unfoldl.list sample) (Unfoldl.prepend (Unfoldl.list sample) (Unfoldl.prepend (Unfoldl.list sample) (Unfoldl.list sample)))))
               ]
         ,
-        let
-          sample = List.range 0 1000
-          op x = x + 1
-          in
-            Benchmark.compare "map and convert to set"
-              "List" (\ _ -> Set.fromList (List.map op sample))
-              "Unfoldl" (\ _ -> Unfoldl.toSet (Unfoldl.map op (Unfoldl.list sample)))
+        define "map and convert to set" <|
+          let
+            sample = List.range 0 1000
+            op x = x + 1
+            in
+              comparison
+                "List" (\ _ -> Set.fromList (List.map op sample))
+                "Unfoldl" (\ _ -> Unfoldl.toSet (Unfoldl.map op (Unfoldl.list sample)))
+        ,
+        define "range to set" <|
+          let
+            op x = x + 1
+            in comparison
+              "List" (\ _ -> Set.fromList (List.range 0 100))
+              "Unfoldl" (\ _ -> Unfoldl.toSet (Unfoldl.range 0 100))
       ]
+
+
+-- # Extensions, which let us isolate naming from definitions
+
+type alias BenchmarkDefinition = String -> Benchmark
+
+define : String -> BenchmarkDefinition -> Benchmark
+define = (|>)
+
+comparison : String -> (() -> a) -> String -> (() -> b) -> BenchmarkDefinition
+comparison lName lFn rName rFn name_ = Benchmark.compare name_ lName lFn rName rFn
