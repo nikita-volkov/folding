@@ -1,6 +1,7 @@
 module Unfoldl exposing (..)
 
 import Benchmark exposing (..)
+import Benchmark.Exts exposing (..)
 import Benchmark.Runner
 import Folding.Unfoldl as Unfoldl exposing (Unfoldl)
 import Set
@@ -89,14 +90,3 @@ main =
               "List" (\ _ -> Set.fromList (List.range 0 100))
               "Unfoldl" (\ _ -> Unfoldl.toSet (Unfoldl.range 0 100))
       ]
-
-
--- # Extensions, which let us isolate naming from definitions
-
-type alias BenchmarkDefinition = String -> Benchmark
-
-define : String -> BenchmarkDefinition -> Benchmark
-define = (|>)
-
-comparison : String -> (() -> a) -> String -> (() -> b) -> BenchmarkDefinition
-comparison lName lFn rName rFn name_ = Benchmark.compare name_ lName lFn rName rFn
