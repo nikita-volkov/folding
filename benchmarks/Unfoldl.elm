@@ -5,6 +5,7 @@ import Benchmark.Exts exposing (..)
 import Benchmark.Runner
 import Folding.Unfoldl as Unfoldl exposing (Unfoldl)
 import Set
+import Array
 
 
 main =
@@ -89,4 +90,11 @@ main =
             in comparison
               "List" (\ _ -> Set.fromList (List.range 0 100))
               "Unfoldl" (\ _ -> Unfoldl.toSet (Unfoldl.range 0 100))
+        ,
+        define "concat arrays into set" <|
+          let
+            sample = List.repeat 10 (Array.fromList (List.range 0 100))
+            in comparison
+              "List" (\ _ -> Set.fromList (List.concatMap Array.toList sample))
+              "Unfoldl" (\ _ -> Unfoldl.toSet (Unfoldl.joinMap Unfoldl.array (Unfoldl.list sample)))
       ]
