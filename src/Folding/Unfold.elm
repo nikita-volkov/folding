@@ -1,9 +1,9 @@
-module Folding.Unfoldl exposing (..)
+module Folding.Unfold exposing (..)
 
 import Array exposing (Array)
 import Dict exposing (Dict)
 import Set exposing (Set)
-import Folding.Foldl as Foldl exposing (Foldl)
+import Folding.Fold as Fold exposing (Fold)
 
 {-| A projection on data, which only knows how to execute a strict left-fold.
 You may also know it as Church-Encoded List.
@@ -13,7 +13,7 @@ with a key difference, that all its transforming and constructing
 operations have complexity of `O(1)`.
 Hence if you need to do series of `map`, `filter`, `concat`, `append` operations
 on one or more collections, always prefer first converting the
-datastructures to `Unfoldl`, then performing the required operations on it,
+datastructures to `Unfold`, then performing the required operations on it,
 and then materializing it into any final datastructure that you need.
 
 In its way this abstraction achieves goals similar to the ones of Clojure's transducers,
@@ -43,21 +43,21 @@ Which in Elm is essentially the same as
 
 If we isolate the grouped part into an abstraction of its own
 
-    type alias Unfoldl b a = (a -> b -> b) -> b -> b
+    type alias Unfold b a = (a -> b -> b) -> b -> b
 
 Then we can get to this simple morphism:
 
-    list :: List a -> Unfoldl b a
+    list :: List a -> Unfold b a
     list x = \ step init -> List.foldl step init x
 
 We can do the same with any other datastructure that can be folded over, say `String`:
 
-    string : String -> Unfoldl b Char
+    string : String -> Unfold b Char
     string x = \ step init -> String.foldl step init x
 
 And then we can use those both to concatenate with just an `O(1)` cost:
 
-    abcdef :: Unfoldl b Char
+    abcdef :: Unfold b Char
     abcdef = prepend (list ['a', 'b', 'c']) (string "def")
 
 Please notice that up until this moment no actual data materialization has happened and
@@ -87,36 +87,36 @@ the above signature would actually be the same as the following:
     foldl :: List a -> (forall b. (a -> b -> b) -> b -> b)
 
 Which would then mean, that we'd be able to drop the redundant `b` parameter
-from the definition of `Unfoldl` altogether:
+from the definition of `Unfold` altogether:
 
-    type alias Unfoldl a = forall b. (a -> b -> b) -> b -> b
+    type alias Unfold a = forall b. (a -> b -> b) -> b -> b
 
-In fact this is actually [the way it is defined in the "deferred-folds" Haskell library](https://hackage.haskell.org/package/deferred-folds-0.9.10.1/docs/DeferredFolds-Unfoldl.html#t:Unfoldl),
+In fact this is actually [the way it is defined in the "deferred-folds" Haskell library](https://hackage.haskell.org/package/deferred-folds-0.9.10.1/docs/DeferredFolds-Unfold.html#t:Unfold),
 which this one draws the inspiration from.
 -}
-type alias Unfoldl state element = (element -> state -> state) -> state -> state
+type alias Unfold state element = (element -> state -> state) -> state -> state
 
 -- * Constructors
 
-empty : Unfoldl s element
+empty : Unfold s element
 empty = always identity
 
-list : List element -> Unfoldl s element
+list : List element -> Unfold s element
 list x step init = List.foldl step init x
 
-set : Set element -> Unfoldl s element
+set : Set element -> Unfold s element
 set x step init = Set.foldl step init x
 
-array : Array element -> Unfoldl s element
+array : Array element -> Unfold s element
 array x step init = Array.foldl step init x
 
-string : String -> Unfoldl s Char
+string : String -> Unfold s Char
 string x step init = String.foldl step init x
 
-dict : Dict key value -> Unfoldl s (key, value)
+dict : Dict key value -> Unfold s (key, value)
 dict x step init = Dict.foldl (\ k v -> step (k, v)) init x
 
-range : Int -> Int -> Unfoldl s Int
+range : Int -> Int -> Unfold s Int
 range first last step =
   let
     loop current state =
@@ -127,79 +127,79 @@ range first last step =
 
 -- * Transformations
 
-cons : element -> Unfoldl s element -> Unfoldl s element
-cons element unfoldl step init = unfoldl step (step element init)
+cons : element -> Unfold s element -> Unfold s element
+cons element unfold step init = unfold step (step element init)
 
-snoc : element -> Unfoldl s element -> Unfoldl s element
-snoc element unfoldl step init = step element (unfoldl step init)
+snoc : element -> Unfold s element -> Unfold s element
+snoc element unfold step init = step element (unfold step init)
 
-append : Unfoldl s element -> Unfoldl s element -> Unfoldl s element
+append : Unfold s element -> Unfold s element -> Unfold s element
 append left right step init = left step (right step init)
 
-prepend : Unfoldl s element -> Unfoldl s element -> Unfoldl s element
+prepend : Unfold s element -> Unfold s element -> Unfold s element
 prepend left right step init = right step (left step init)
 
-map : (a -> b) -> Unfoldl s a -> Unfoldl s b
-map fn unfoldl step = unfoldl (\ element -> step (fn element))
+map : (a -> b) -> Unfold s a -> Unfold s b
+map fn unfold step = unfold (\ element -> step (fn element))
 
-concat : List (Unfoldl s element) -> Unfoldl s element
-concat x step init = List.foldl (\ innerUnfoldl -> innerUnfoldl step) init x
+concat : List (Unfold s element) -> Unfold s element
+concat x step init = List.foldl (\ innerUnfold -> innerUnfold step) init x
 
-concatMap : (a -> List b) -> Unfoldl s a -> Unfoldl s b
+concatMap : (a -> List b) -> Unfold s a -> Unfold s b
 concatMap b a step init = a (\ element state -> List.foldl step state (b element)) init
 
-join : Unfoldl s (Unfoldl s element) -> Unfoldl s element
-join unfoldl step init = unfoldl (\ innerUnfoldl -> innerUnfoldl step) init
+join : Unfold s (Unfold s element) -> Unfold s element
+join unfold step init = unfold (\ innerUnfold -> innerUnfold step) init
 
-joinMap : (a -> Unfoldl s b) -> Unfoldl s a -> Unfoldl s b
+joinMap : (a -> Unfold s b) -> Unfold s a -> Unfold s b
 joinMap b a step init = a (\ element -> b element step) init
 
-filter : (element -> Bool) -> Unfoldl s element -> Unfoldl s element
-filter fn unfoldl step init =
+filter : (element -> Bool) -> Unfold s element -> Unfold s element
+filter fn unfold step init =
   let
     newStep a state = if fn a
       then step a state
       else state
-    in unfoldl newStep init
+    in unfold newStep init
 
-filterMap : (a -> Maybe b) -> Unfoldl s a -> Unfoldl s b
-filterMap fn unfoldl step init =
+filterMap : (a -> Maybe b) -> Unfold s a -> Unfold s b
+filterMap fn unfold step init =
   let
     newStep a state = case fn a of
       Just b -> step b state
       Nothing -> state
-    in unfoldl newStep init
+    in unfold newStep init
 
-index : Unfoldl (Int, s) element -> Unfoldl s (Int, element)
-index unfoldl step init =
+index : Unfold (Int, s) element -> Unfold s (Int, element)
+index unfold step init =
   let
     newStep a (i, state) = (i + 1, step (i, a) state)
-    in Tuple.second (unfoldl newStep (0, init))
+    in Tuple.second (unfold newStep (0, init))
 
-unique : Unfoldl (Set comparable, s) comparable -> Unfoldl s comparable
-unique unfoldl step =
+unique : Unfold (Set comparable, s) comparable -> Unfold s comparable
+unique unfold step =
   let
     newStep element (known, state) = if Set.member element known
       then (known, state)
       else (Set.insert element known, step element state)
-    in \ init -> unfoldl newStep (Set.empty, init) |> Tuple.second
+    in \ init -> unfold newStep (Set.empty, init) |> Tuple.second
 
 -- * Materialization
 
-foldl : Foldl s element result -> Unfoldl s element -> result
-foldl f unfoldl = f.finish (unfoldl f.step f.init)
+fold : Fold s element result -> Unfold s element -> result
+fold f unfold = f.finish (unfold f.step f.init)
 
-toList : Unfoldl (List element) element -> List element
-toList = foldl Foldl.list
+toList : Unfold (List element) element -> List element
+toList = fold Fold.list
 
-toReverseList : Unfoldl (List element) element -> List element
-toReverseList = foldl Foldl.reverseList
+toReverseList : Unfold (List element) element -> List element
+toReverseList = fold Fold.reverseList
 
-toString : Unfoldl (List Char) Char -> String
-toString = foldl Foldl.string
+toString : Unfold (List Char) Char -> String
+toString = fold Fold.string
 
-toSet : Unfoldl (Set comparable) comparable -> Set comparable
-toSet = foldl Foldl.set
+toSet : Unfold (Set comparable) comparable -> Set comparable
+toSet = fold Fold.set
 
-toArray : Unfoldl (List element) element -> Array element
-toArray = foldl Foldl.array
+toArray : Unfold (List element) element -> Array element
+toArray = fold Fold.array

@@ -1,11 +1,11 @@
-module Folding.Foldl exposing (..)
+module Folding.Fold exposing (..)
 
 import Array exposing (Array)
 import Dict exposing (Dict)
 import Either exposing (Either(..))
 import Set exposing (Set)
 
-type alias Foldl state element result =
+type alias Fold state element result =
   {
     init : state,
     step : element -> state -> state,
@@ -14,7 +14,7 @@ type alias Foldl state element result =
 
 -- * Constructors
 
-simple : (a -> b -> b) -> b -> Foldl b a b
+simple : (a -> b -> b) -> b -> Fold b a b
 simple step init =
   {
     init = init,
@@ -22,7 +22,7 @@ simple step init =
     finish = identity
   }
 
-finalized : (a -> b -> b) -> b -> (b -> c) -> Foldl b a c
+finalized : (a -> b -> b) -> b -> (b -> c) -> Fold b a c
 finalized step init finish =
   {
     init = init,
@@ -30,25 +30,25 @@ finalized step init finish =
     finish = finish
   }
 
-length : Foldl Int a Int
+length : Fold Int a Int
 length = simple (\ _ x -> x + 1) 0
 
-reverseList : Foldl (List a) a (List a)
+reverseList : Fold (List a) a (List a)
 reverseList = simple (::) []
 
-list : Foldl (List a) a (List a)
+list : Fold (List a) a (List a)
 list = finalized (::) [] List.reverse
 
-set : Foldl (Set comparable) comparable (Set comparable)
+set : Fold (Set comparable) comparable (Set comparable)
 set = simple Set.insert Set.empty
 
-array : Foldl (List a) a (Array a)
+array : Fold (List a) a (Array a)
 array = mapOutput Array.fromList list
 
-string : Foldl (List Char) Char String
+string : Fold (List Char) Char String
 string = finalized (::) [] (List.reverse >> String.fromList)
 
-either : Foldl x1 a1 b1 -> Foldl x2 a2 b2 -> Foldl (x1, x2) (Either a1 a2) (b1, b2)
+either : Fold x1 a1 b1 -> Fold x2 a2 b2 -> Fold (x1, x2) (Either a1 a2) (b1, b2)
 either left right =
   {
     init = (left.init, right.init),
@@ -60,23 +60,23 @@ either left right =
 
 -- * Transformations
 
-mapOutput : (a -> b) -> Foldl state input a -> Foldl state input b
-mapOutput fn foldl = { init = foldl.init, step = foldl.step, finish = foldl.finish >> fn }
+mapOutput : (a -> b) -> Fold state input a -> Fold state input b
+mapOutput fn fold = { init = fold.init, step = fold.step, finish = fold.finish >> fn }
 
-mapInput : (a -> b) -> Foldl state b output -> Foldl state a output
-mapInput fn foldl =
+mapInput : (a -> b) -> Fold state b output -> Fold state a output
+mapInput fn fold =
   {
-    init = foldl.init,
-    step = \ a state -> foldl.step (fn a) state,
-    finish = foldl.finish
+    init = fold.init,
+    step = \ a state -> fold.step (fn a) state,
+    finish = fold.finish
   }
 
-filterMapInput : (a -> Maybe b) -> Foldl state b output -> Foldl state a output
-filterMapInput fn foldl =
+filterMapInput : (a -> Maybe b) -> Fold state b output -> Fold state a output
+filterMapInput fn fold =
   {
-    init = foldl.init,
+    init = fold.init,
     step = \ a state -> case fn a of
-      Just b -> foldl.step b state
+      Just b -> fold.step b state
       Nothing -> state,
-    finish = foldl.finish
+    finish = fold.finish
   }
