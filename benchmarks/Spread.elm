@@ -1,9 +1,9 @@
-module Unfold exposing (..)
+module Spread exposing (..)
 
 import Benchmark exposing (..)
 import Benchmark.Exts exposing (..)
 import Benchmark.Runner
-import Folding.Unfold as Unfold exposing (Unfold)
+import Folding.Spread as Spread exposing (Spread)
 import Set
 import Array
 
@@ -20,19 +20,19 @@ main =
               [
                 Benchmark.compare "single"
                   "List" (\ _ -> List.map op sample)
-                  "Unfold" (\ _ -> Unfold.toList (Unfold.map op (Unfold.list sample)))
+                  "Spread" (\ _ -> Spread.toList (Spread.map op (Spread.list sample)))
                 ,
                 Benchmark.compare "double"
                   "List" (\ _ -> List.map op (List.map op sample))
-                  "Unfold" (\ _ -> Unfold.toList (Unfold.map op (Unfold.map op (Unfold.list sample))))
+                  "Spread" (\ _ -> Spread.toList (Spread.map op (Spread.map op (Spread.list sample))))
                 ,
                 Benchmark.compare "triple"
                   "List" (\ _ -> List.map op (List.map op (List.map op sample)))
-                  "Unfold" (\ _ -> Unfold.toList (Unfold.map op (Unfold.map op (Unfold.map op (Unfold.list sample)))))
+                  "Spread" (\ _ -> Spread.toList (Spread.map op (Spread.map op (Spread.map op (Spread.list sample)))))
                 ,
                 Benchmark.compare "quadruple"
                   "List" (\ _ -> List.map op (List.map op (List.map op (List.map op sample))))
-                  "Unfold" (\ _ -> Unfold.toList (Unfold.map op (Unfold.map op (Unfold.map op (Unfold.map op (Unfold.list sample))))))
+                  "Spread" (\ _ -> Spread.toList (Spread.map op (Spread.map op (Spread.map op (Spread.map op (Spread.list sample))))))
               ]
         ,
         describe "concat" <|
@@ -43,7 +43,7 @@ main =
                 in
                   Benchmark.compare (String.fromInt size)
                     "List" (\ _ -> List.concat sample)
-                    "Unfold" (\ _ -> Unfold.toList (Unfold.joinMap Unfold.list (Unfold.list sample)))
+                    "Spread" (\ _ -> Spread.toList (Spread.joinMap Spread.list (Spread.list sample)))
             in
               [
                 bySize 10
@@ -55,7 +55,7 @@ main =
           in
             Benchmark.compare "concatMap & map"
               "List" (\ _ -> List.concatMap (List.map op) sample)
-              "Unfold" (\ _ -> Unfold.toList (Unfold.joinMap (Unfold.map op << Unfold.list) (Unfold.list sample)))
+              "Spread" (\ _ -> Spread.toList (Spread.joinMap (Spread.map op << Spread.list) (Spread.list sample)))
         ,
         describe "append" <|
           let
@@ -64,15 +64,15 @@ main =
               [
                 Benchmark.compare "single"
                   "List" (\ _ -> sample ++ sample)
-                  "Unfold" (\ _ -> Unfold.toList (Unfold.prepend (Unfold.list sample) (Unfold.list sample)))
+                  "Spread" (\ _ -> Spread.toList (Spread.prepend (Spread.list sample) (Spread.list sample)))
                 ,
                 Benchmark.compare "double"
                   "List" (\ _ -> sample ++ sample ++ sample)
-                  "Unfold" (\ _ -> Unfold.toList (Unfold.prepend (Unfold.list sample) (Unfold.prepend (Unfold.list sample) (Unfold.list sample))))
+                  "Spread" (\ _ -> Spread.toList (Spread.prepend (Spread.list sample) (Spread.prepend (Spread.list sample) (Spread.list sample))))
                 ,
                 Benchmark.compare "triple"
                   "List" (\ _ -> sample ++ sample ++ sample ++ sample)
-                  "Unfold" (\ _ -> Unfold.toList (Unfold.prepend (Unfold.list sample) (Unfold.prepend (Unfold.list sample) (Unfold.prepend (Unfold.list sample) (Unfold.list sample)))))
+                  "Spread" (\ _ -> Spread.toList (Spread.prepend (Spread.list sample) (Spread.prepend (Spread.list sample) (Spread.prepend (Spread.list sample) (Spread.list sample)))))
               ]
         ,
         define "map and convert to set" <|
@@ -82,21 +82,21 @@ main =
             in
               comparison
                 "List" (\ _ -> Set.fromList (List.map op sample))
-                "Unfold" (\ _ -> Unfold.toSet (Unfold.map op (Unfold.list sample)))
+                "Spread" (\ _ -> Spread.toSet (Spread.map op (Spread.list sample)))
         ,
         define "range to set" <|
           let
             op x = x + 1
             in comparison
               "List" (\ _ -> Set.fromList (List.range 0 100))
-              "Unfold" (\ _ -> Unfold.toSet (Unfold.range 0 100))
+              "Spread" (\ _ -> Spread.toSet (Spread.range 0 100))
         ,
         define "concat arrays into set" <|
           let
             sample = List.repeat 10 (Array.fromList (List.range 0 100))
             in comparison
               "List" (\ _ -> Set.fromList (List.concatMap Array.toList sample))
-              "Unfold" (\ _ -> Unfold.toSet (Unfold.joinMap Unfold.array (Unfold.list sample)))
+              "Spread" (\ _ -> Spread.toSet (Spread.joinMap Spread.array (Spread.list sample)))
         ,
         define "map and concat arrays into set" <|
           let
@@ -104,7 +104,7 @@ main =
             op x = x + 1
             in comparison
               "List" (\ _ -> Set.fromList (List.concatMap (List.map op << Array.toList) sample))
-              "Unfold" (\ _ -> Unfold.toSet (Unfold.joinMap (Unfold.map op << Unfold.array) (Unfold.list sample)))
+              "Spread" (\ _ -> Spread.toSet (Spread.joinMap (Spread.map op << Spread.array) (Spread.list sample)))
         ,
         define "map and concat arrays into list regardless of order" <|
           let
@@ -112,7 +112,7 @@ main =
             op x = x + 1
             in comparison
               "List" (\ _ -> (List.concatMap (List.map op << Array.toList) sample))
-              "Unfold" (\ _ -> Unfold.toReverseList (Unfold.joinMap (Unfold.map op << Unfold.array) (Unfold.list sample)))
+              "Spread" (\ _ -> Spread.toReverseList (Spread.joinMap (Spread.map op << Spread.array) (Spread.list sample)))
         ,
         define "concat different datastructures into list regardless of order" <|
           let
@@ -121,5 +121,5 @@ main =
             set = Set.fromList (List.range 200 299)
             in comparison
               "List" (\ _ -> List.concat [list, Array.toList array, Set.toList set])
-              "Unfold" (\ _ -> Unfold.toReverseList (Unfold.concat [Unfold.list list, Unfold.array array, Unfold.set set]))
+              "Spread" (\ _ -> Spread.toReverseList (Spread.concat [Spread.list list, Spread.array array, Spread.set set]))
       ]

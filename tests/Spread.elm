@@ -1,9 +1,9 @@
-module Unfold exposing (..)
+module Spread exposing (..)
 
 import Expect exposing (..)
 import Fuzz exposing (..)
 import Test exposing (..)
-import Folding.Unfold as Unfold exposing (Unfold)
+import Folding.Spread as Spread exposing (Spread)
 
 
 listOps : Test
@@ -12,25 +12,25 @@ listOps =
     [
       fuzz (list string) "concat" <| \ stringList ->
         equal (String.concat stringList)
-          (Unfold.toString (Unfold.concat (List.map Unfold.string stringList)))
+          (Spread.toString (Spread.concat (List.map Spread.string stringList)))
       ,
       fuzz (list int) "map" <| \ intList ->
         equal (List.map (\ x -> x + 1) intList)
-          (Unfold.toList (Unfold.map (\ x -> x + 1) (Unfold.list intList)))
+          (Spread.toList (Spread.map (\ x -> x + 1) (Spread.list intList)))
       ,
       fuzz2 (list int) (list int) "prepend" <| \ a b ->
         equal (List.append a b)
-          (Unfold.toList (Unfold.prepend (Unfold.list a) (Unfold.list b)))
+          (Spread.toList (Spread.prepend (Spread.list a) (Spread.list b)))
       ,
       fuzz2 int (list int) "cons" <| \ a b ->
         equal (a :: b)
-          (Unfold.toList (Unfold.cons a (Unfold.list b)))
+          (Spread.toList (Spread.cons a (Spread.list b)))
       ,
       fuzz2 int (list int) "snoc" <| \ a b ->
         equal (b ++ [a])
-          (Unfold.toList (Unfold.snoc a (Unfold.list b)))
+          (Spread.toList (Spread.snoc a (Spread.list b)))
       ,
       fuzz2 (intRange -100 100) (intRange -100 100) "range" <| \ a b ->
         equal (List.range a b)
-          (Unfold.toList (Unfold.range a b))
+          (Spread.toList (Spread.range a b))
     ]
