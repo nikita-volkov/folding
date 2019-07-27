@@ -33,10 +33,10 @@ finalized step init finish =
 length : Fold Int a Int
 length = simple (\ _ x -> x + 1) 0
 
-maxWithInit : comparable -> Fold comparable comparable comparable
-maxWithInit init =
+maxWithDefault : comparable -> Fold comparable comparable comparable
+maxWithDefault default =
   {
-    init = init,
+    init = default,
     step = max,
     finish = identity
   }
