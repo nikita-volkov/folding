@@ -33,6 +33,14 @@ finalized step init finish =
 length : Fold Int a Int
 length = simple (\ _ x -> x + 1) 0
 
+maxWithInit : comparable -> Fold comparable comparable comparable
+maxWithInit init =
+  {
+    init = init,
+    step = max,
+    finish = identity
+  }
+
 reverseList : Fold (List a) a (List a)
 reverseList = simple (::) []
 
