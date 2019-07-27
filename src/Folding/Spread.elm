@@ -101,6 +101,9 @@ type alias Spread state element = (element -> state -> state) -> state -> state
 empty : Spread s element
 empty = always identity
 
+singleton : element -> Spread s element
+singleton element step init = step element init
+
 list : List element -> Spread s element
 list x step init = List.foldl step init x
 
