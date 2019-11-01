@@ -1,16 +1,11 @@
 module Folding.Fold exposing (..)
 
+import Folding.Types exposing (..)
 import Array exposing (Array)
 import Dict exposing (Dict)
 import Either exposing (Either(..))
 import Set exposing (Set)
 
-type alias Fold state element result =
-  {
-    init : state,
-    step : element -> state -> state,
-    finish : state -> result
-  }
 
 -- * Constructors
 

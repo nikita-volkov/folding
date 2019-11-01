@@ -1,14 +1,10 @@
 module Folding.Reduction exposing (..)
 
+import Folding.Types exposing (..)
 import Array exposing (Array)
 import Dict exposing (Dict)
 import Either exposing (Either(..))
 import Set exposing (Set)
-
-
-type Reduction i o =
-  Ongoing o (i -> Reduction i o) |
-  Terminated o
 
 
 -- * Execution
@@ -20,6 +16,24 @@ reduceList reduction list = case reduction of
     i :: nextList -> reduceList (nextReduction i) nextList
     _ -> o
   Terminated o -> o
+
+reduceSpread : Reduction a b -> Spread (Reduction a b) a -> b
+reduceSpread initialReduction spread =
+  let
+    finalReduction =
+      spread
+        (\ input reduction -> case reduction of
+          Ongoing _ nextReduction -> nextReduction input
+          _ -> reduction
+        )
+        initialReduction
+    in case finalReduction of
+      Ongoing output _ -> output
+      Terminated output -> output
+
+reduceFoldable : Reduction a b -> ((a -> Reduction a b -> Reduction a b) -> Reduction a b -> c -> Reduction a b) -> c -> b
+reduceFoldable reduction fold foldable =
+  reduceSpread reduction (\ step state -> fold step state foldable)
 
 
 -- * Construction
