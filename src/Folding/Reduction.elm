@@ -31,9 +31,9 @@ reduceSpread initialReduction spread =
       Ongoing output _ -> output
       Terminated output -> output
 
-reduceFoldable : Reduction a b -> ((a -> Reduction a b -> Reduction a b) -> Reduction a b -> c -> Reduction a b) -> c -> b
-reduceFoldable reduction fold foldable =
-  reduceSpread reduction (\ step state -> fold step state foldable)
+reduceFolding : Folding (Reduction a b) a c -> Reduction a b -> c -> b
+reduceFolding folding reduction foldable =
+  reduceSpread reduction (\ step state -> folding step state foldable)
 
 
 -- * Construction

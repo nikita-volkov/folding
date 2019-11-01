@@ -102,3 +102,6 @@ type alias Fold state element result =
 type Reduction i o =
   Ongoing o (i -> Reduction i o) |
   Terminated o
+
+type alias Folding state element container =
+  (element -> state -> state) -> state -> container -> state
