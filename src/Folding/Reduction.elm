@@ -35,6 +35,18 @@ reduceFolding : Folding (Reduction a b) a c -> Reduction a b -> c -> b
 reduceFolding folding reduction foldable =
   reduceSpread reduction (\ step state -> folding step state foldable)
 
+toFold : Reduction a b -> Fold (Reduction a b) a b
+toFold initialReduction =
+  {
+    init = initialReduction,
+    step = \ input reduction -> case reduction of
+      Ongoing _ nextReduction -> nextReduction input
+      _ -> reduction,
+    finish = \ reduction -> case reduction of
+      Ongoing o _ -> o
+      Terminated o -> o
+  }
+
 
 -- * Construction
 -------------------------
